@@ -19,16 +19,16 @@ dificultades = json.load(open(DATA / "dificultades_generador.json"))
 features_cfg = json.load(open(DATA / "features_estudiante.json"))
 
 MATERIAS = plan["materias"]
-MAT = {m["id"]: m for m in MATERIAS}
+MAT = {str(m["id"]): m for m in MATERIAS}  # Forzamos que las claves del dict sean texto
 N_MATERIAS = len(MATERIAS)
 
 COLS_FEATURES = [f["nombre"] for f in features_cfg["features_modelo"]["features"]]
 
 # ---------- Validaciones ----------
 def validar():
-    ids_plan = set(MAT)
+    ids_plan = set(MAT.keys())
     for mid in dificultades["por_materia"]:
-        if mid not in ids_plan:
+        if str(mid) not in ids_plan:
             raise ValueError(f"dificultades_generador.json: '{mid}' no existe en el plan")
 
     esperadas = {
@@ -42,14 +42,16 @@ def validar():
         raise ValueError(f"features_estudiante.json desalineado. Faltan: {faltan}. Sobran: {sobran}")
 
 def verificar_dag():
-    indeg = {m["id"]: 0 for m in MATERIAS}
-    adj = {m["id"]: [] for m in MATERIAS}
+    indeg = {str(m["id"]): 0 for m in MATERIAS}
+    adj = {str(m["id"]): [] for m in MATERIAS}
     for m in MATERIAS:
+        m_id = str(m["id"])
         for c in m["correlativas"]:
-            if c not in MAT:
-                raise ValueError(f"Correlativa '{c}' de '{m['id']}' no existe en el plan")
-            adj[c].append(m["id"])
-            indeg[m["id"]] += 1
+            c_str = str(c)
+            if c_str not in MAT:
+                raise ValueError(f"Correlativa '{c}' de '{m_id}' no existe en el plan")
+            adj[c_str].append(m_id)
+            indeg[m_id] += 1
     q = deque([n for n, d in indeg.items() if d == 0])
     orden = []
     while q:
@@ -62,9 +64,10 @@ def verificar_dag():
     return orden
 
 def dificultad_de(mid):
-    if mid in dificultades["por_materia"]:
-        return dificultades["por_materia"][mid]
-    return dificultades["por_anio"][str(MAT[mid]["anio"])]
+    mid_str = str(mid)
+    if mid_str in dificultades["por_materia"]:
+        return dificultades["por_materia"][mid_str]
+    return dificultades["por_anio"][str(MAT[mid_str]["anio"])]
 
 # ---------- Simulación ----------
 def sigmoid(x):
@@ -89,8 +92,8 @@ def generar_estudiante(est_id):
 
         habilitadas = [
             m for m in MATERIAS
-            if m["id"] not in aprobadas
-            and all(c in aprobadas for c in m["correlativas"])
+            if str(m["id"]) not in aprobadas
+            and all(str(c) in aprobadas for c in m["correlativas"])
         ]
         if not habilitadas:
             break
@@ -99,12 +102,14 @@ def generar_estudiante(est_id):
             round(2.5 + 1.2 * constancia - 0.8 * carga_ext + RNG.normal(0, 0.7)),
             N_CURSAR_MIN, min(N_CURSAR_MAX, len(habilitadas))
         ))
+        
+        # Si elegimos una sola, RNG.choice puede devolver un array de 1D.
         elegidas = RNG.choice(habilitadas, size=n_cursar, replace=False)
 
         for m in elegidas:
-            mid = m["id"]
+            mid = str(m["id"])
             dif = dificultad_de(mid)
-            notas_corr = [aprobadas[c] for c in m["correlativas"] if c in aprobadas]
+            notas_corr = [aprobadas[str(c)] for c in m["correlativas"] if str(c) in aprobadas]
             prom_corr = float(np.mean(notas_corr)) if notas_corr else 6.0
             peor_corr = float(np.min(notas_corr)) if notas_corr else 6.0
             recursadas = intentos.get(mid, 0)
@@ -127,7 +132,7 @@ def generar_estudiante(est_id):
             filas.append(dict(
                 estudiante_id=est_id,
                 cuatrimestre=cuat,
-                materia=mid,
+                materia=int(mid),   # Guardamos como entero para Tomás
                 anio_materia=m["anio"],
                 promedio_general=round(float(np.mean(list(aprobadas.values()))) if aprobadas else 6.0, 2),
                 promedio_correlativas=round(prom_corr, 2),
@@ -142,7 +147,7 @@ def generar_estudiante(est_id):
             if aprobo:
                 aprobadas[mid] = nota_desde(habilidad, dif, SIGMA_RUIDO)
 
-    return filas, {mid: round(n, 2) for mid, n in aprobadas.items()}, intentos
+    return filas, {int(mid): round(n, 2) for mid, n in aprobadas.items()}, intentos
 
 # ---------- Main ----------
 def main():
