@@ -61,8 +61,6 @@ plan = pd.DataFrame({
         "Práctica Profesional III",
         "Idioma Extranjero",
 
-        # CICLO DE FORMACIÓN ESPECIAL
-        "Ciclo de Formación Especial"
     ],
 
     "correlativas": [
@@ -111,7 +109,7 @@ plan = pd.DataFrame({
         [23, 26],             # 34 Procesal II, Familias
         [22, 23, 27],         # 35 Personas Jurídicas, Procesal II, Trabajo y Seguridad Social
         [23, 30],             # 36 Procesal II, Administrativo I
-        [23],                 # 37 Procesal II
+        [23, 30],             # 37 Procesal II, Administrativo I
         [23, 27],             # 38 Procesal II, Trabajo y Seguridad Social
 
         # SEXTO AÑO
@@ -121,9 +119,6 @@ plan = pd.DataFrame({
         [26],                 # 42 Derecho de las Familias
         [23, 27, 29],         # 43 Procesal II, Trabajo, Consumidor
         [],                   # 44 Sin correlativas
-
-        # CICLO DE FORMACIÓN ESPECIAL
-        list(range(1, 30))    # 45 Primero a cuarto año completo
     ],
 
     "año": [
@@ -133,6 +128,5 @@ plan = pd.DataFrame({
         4, 4, 4, 4, 4, 4, 4, 4,
         5, 5, 5, 5, 5, 5, 5, 5, 5,
         6, 6, 6, 6, 6, 6,
-        6
     ]
 })
