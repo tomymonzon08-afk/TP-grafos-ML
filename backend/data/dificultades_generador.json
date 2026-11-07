@@ -1,5 +1,5 @@
 {
-  "descripcion": "Dificultad simulada por materia (0=fácil, 1=muy difícil). Solo la usa el generador para simular P(aprobar). NO es feature del modelo y NO debe usarse en el backend.",
+  "descripcion": "Dificultad simulada por materia (0=fácil, 1=muy difícil). Solo la usa el generador para simular P(aprobar). NO es feature del modelo.",
   "por_anio": {
     "1": 0.45,
     "2": 0.55,
@@ -9,54 +9,11 @@
     "6": 0.65
   },
   "por_materia": {
-    "FILO":   0.45,
-    "HCA":    0.45,
-    "INTRO":  0.45,
-    "CONST":  0.45,
-    "PRIV":   0.45,
-    "TAII":   0.35,
-
-    "OBLIG":  0.55,
-    "HDER":   0.55,
-    "ECON":   0.55,
-    "DDHH":   0.55,
-    "REALES": 0.55,
-    "DANOS":  0.55,
-    "FINAN":  0.60,
-
-    "PENAL1": 0.70,
-    "CONTR":  0.65,
-    "POLIT":  0.60,
-    "TRIB":   0.60,
-    "PROC1":  0.70,
-    "EMPRE":  0.60,
-    "AGRAR":  0.60,
-    "PRAC1":  0.50,
-
-    "PERJUR": 0.60,
-    "PROC2":  0.65,
-    "SOCIO":  0.60,
-    "PENAL2": 0.65,
-    "FAMIL":  0.60,
-    "TRAB":   0.60,
-    "AMBI":   0.60,
-    "CONSUM": 0.60,
-
-    "ADM1":   0.65,
-    "PROC3":  0.70,
-    "SEGCIU": 0.65,
-    "TITVAL": 0.65,
-    "PRAC2":  0.50,
-    "INSOL":  0.65,
-    "ADM2":   0.65,
-    "INTLPUB":0.65,
-    "TRANS":  0.65,
-
-    "INTLPRI":0.65,
-    "FILOD":  0.65,
-    "INTEG":  0.65,
-    "SUCES":  0.65,
-    "PRAC3":  0.50,
-    "IDIOMA": 0.40
+    "1": 0.45, "2": 0.45, "3": 0.45, "4": 0.45, "5": 0.45, "6": 0.35,
+    "7": 0.55, "8": 0.55, "9": 0.55, "10": 0.55, "11": 0.55, "12": 0.55, "13": 0.60,
+    "14": 0.70, "15": 0.65, "16": 0.60, "17": 0.60, "18": 0.70, "19": 0.60, "20": 0.60, "21": 0.50,
+    "22": 0.60, "23": 0.65, "24": 0.60, "25": 0.65, "26": 0.60, "27": 0.60, "28": 0.60, "29": 0.60,
+    "30": 0.65, "31": 0.70, "32": 0.65, "33": 0.65, "34": 0.50, "35": 0.65, "36": 0.65, "37": 0.65, "38": 0.65,
+    "39": 0.65, "40": 0.65, "41": 0.65, "42": 0.65, "43": 0.50, "44": 0.40
   }
 }
