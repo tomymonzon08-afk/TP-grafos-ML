@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 planDeEstudios = pd.DataFrame({
-    "id-materia": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
+    "id_materia": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
     "nombre": ["Laboratorio de Datos I",
                 "Estadística I",
                 "Programación I", 
@@ -64,8 +64,5 @@ planDeEstudios = pd.DataFrame({
     "año": [1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4], 
     "cuatrimestre": [1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,1,1,1,1,2,2,2,2,1,1,1,2,2]
 })
-
-
-print(planDeEstudios)
 
 #Elegimos el plan de estudios de la carrera Ciencia de Datos de la FCEyE. Dejamos de lado las materias optativas para este diseño
