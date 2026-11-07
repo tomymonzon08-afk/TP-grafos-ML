@@ -1,0 +1,55 @@
+{
+  "carrera": "Abogacía - UNR",
+  "plan": "2016",
+  "materias": [
+    {"id": "FILO",   "nombre": "Introducción a la Filosofía y a las Cs. Sociales", "anio": 1, "correlativas": []},
+    {"id": "HCA",    "nombre": "Historia Constitucional Argentina",                "anio": 1, "correlativas": []},
+    {"id": "INTRO",  "nombre": "Introducción al Derecho",                          "anio": 1, "correlativas": []},
+    {"id": "CONST",  "nombre": "Derecho Constitucional",                           "anio": 1, "correlativas": []},
+    {"id": "PRIV",   "nombre": "Derecho Privado Parte General",                    "anio": 1, "correlativas": []},
+    {"id": "TAII",   "nombre": "Taller de Acceso a la Información Jurídica",       "anio": 1, "correlativas": []},
+
+    {"id": "OBLIG",  "nombre": "Derecho de las Obligaciones",                      "anio": 2, "correlativas": ["PRIV"]},
+    {"id": "HDER",   "nombre": "Historia del Derecho",                             "anio": 2, "correlativas": ["FILO", "INTRO"]},
+    {"id": "ECON",   "nombre": "Economía Política",                                "anio": 2, "correlativas": ["FILO", "INTRO"]},
+    {"id": "DDHH",   "nombre": "Derechos Humanos",                                 "anio": 2, "correlativas": ["HCA", "CONST", "HDER"]},
+    {"id": "REALES", "nombre": "Derechos Reales",                                  "anio": 2, "correlativas": ["INTRO", "OBLIG"]},
+    {"id": "DANOS",  "nombre": "Derecho de Daños",                                 "anio": 2, "correlativas": ["PRIV"]},
+    {"id": "FINAN",  "nombre": "Finanzas y Derecho Financiero",                    "anio": 2, "correlativas": ["CONST", "ECON"]},
+
+    {"id": "PENAL1", "nombre": "Derecho Penal I",                                  "anio": 3, "correlativas": ["FILO", "INTRO", "CONST", "DDHH"]},
+    {"id": "CONTR",  "nombre": "Derecho de los Contratos",                         "anio": 3, "correlativas": ["CONST", "OBLIG"]},
+    {"id": "POLIT",  "nombre": "Derecho Político",                                 "anio": 3, "correlativas": ["HDER", "ECON"]},
+    {"id": "TRIB",   "nombre": "Derecho Tributario",                               "anio": 3, "correlativas": ["FINAN"]},
+    {"id": "PROC1",  "nombre": "Derecho Procesal I",                               "anio": 3, "correlativas": ["PENAL1", "CONTR"]},
+    {"id": "EMPRE",  "nombre": "Derecho de la Empresa y el Mercado",               "anio": 3, "correlativas": ["INTRO", "OBLIG"]},
+    {"id": "AGRAR",  "nombre": "Derecho Agrario",                                  "anio": 3, "correlativas": ["REALES", "CONTR"]},
+    {"id": "PRAC1",  "nombre": "Práctica Profesional I",                           "anio": 3, "correlativas": ["CONST", "OBLIG", "TAII", "DANOS"]},
+
+    {"id": "PERJUR", "nombre": "Derecho de las Personas Jurídicas",                "anio": 4, "correlativas": ["FILO", "CONTR"]},
+    {"id": "PROC2",  "nombre": "Derecho Procesal II",                              "anio": 4, "correlativas": ["PROC1"]},
+    {"id": "SOCIO",  "nombre": "Sociología General y del Derecho",                 "anio": 4, "correlativas": ["POLIT"]},
+    {"id": "PENAL2", "nombre": "Derecho Penal II",                                 "anio": 4, "correlativas": ["PENAL1"]},
+    {"id": "FAMIL",  "nombre": "Derecho de las Familias",                          "anio": 4, "correlativas": ["REALES", "CONTR", "PENAL1"]},
+    {"id": "TRAB",   "nombre": "Derecho del Trabajo y de la Seguridad Social",     "anio": 4, "correlativas": ["PROC1"]},
+    {"id": "AMBI",   "nombre": "Derecho Ambiental",                                "anio": 4, "correlativas": ["PROC1"]},
+    {"id": "CONSUM", "nombre": "Derecho del Consumidor",                           "anio": 4, "correlativas": ["PROC2"]},
+
+    {"id": "ADM1",   "nombre": "Derecho Administrativo I",                         "anio": 5, "correlativas": ["FINAN", "POLIT", "PERJUR", "SOCIO", "PENAL2"]},
+    {"id": "PROC3",  "nombre": "Derecho Procesal III",                             "anio": 5, "correlativas": ["PENAL2", "PROC1"]},
+    {"id": "SEGCIU", "nombre": "Políticas Democráticas de Seguridad Ciudadana",    "anio": 5, "correlativas": ["SOCIO", "PENAL2"]},
+    {"id": "TITVAL", "nombre": "Títulos Valores",                                  "anio": 5, "correlativas": ["PROC1", "PERJUR"]},
+    {"id": "PRAC2",  "nombre": "Práctica Profesional II",                          "anio": 5, "correlativas": ["PROC2", "FAMIL"]},
+    {"id": "INSOL",  "nombre": "Derecho de la Insolvencia",                        "anio": 5, "correlativas": ["PERJUR", "PROC2", "TRAB"]},
+    {"id": "ADM2",   "nombre": "Derecho Administrativo II",                        "anio": 5, "correlativas": ["PROC2", "ADM1"]},
+    {"id": "INTLPUB","nombre": "Derecho Internacional Público",                    "anio": 5, "correlativas": ["PROC2", "ADM1"]},
+    {"id": "TRANS",  "nombre": "Derecho del Transporte y la Navegación",           "anio": 5, "correlativas": ["PROC2", "TRAB"]},
+
+    {"id": "INTLPRI","nombre": "Derecho Internacional Privado",                    "anio": 6, "correlativas": ["PERJUR", "FAMIL"]},
+    {"id": "FILOD",  "nombre": "Filosofía del Derecho",                            "anio": 6, "correlativas": ["SOCIO"]},
+    {"id": "INTEG",  "nombre": "Derecho de la Integración",                        "anio": 6, "correlativas": ["INTLPUB"]},
+    {"id": "SUCES",  "nombre": "Derecho de las Sucesiones",                        "anio": 6, "correlativas": ["FAMIL"]},
+    {"id": "PRAC3",  "nombre": "Práctica Profesional III",                         "anio": 6, "correlativas": ["PROC2", "TRAB", "CONSUM"]},
+    {"id": "IDIOMA", "nombre": "Idioma Extranjero",                                "anio": 6, "correlativas": []}
+  ]
+}
