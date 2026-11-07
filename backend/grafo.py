@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import planDeEstudios as pe
 
+
 def armarGrafo(grafo, plan):
     grafo.add_node(0) 
 
@@ -13,7 +14,7 @@ def armarGrafo(grafo, plan):
         correlativas = fila["correlativas"]
 
         # Sin correlativas: arista desde el nodo de inicio
-        if not isinstance(correlativas, list):   # np.nan no es lista
+        if not correlativas:   # np.nan no es lista
             grafo.add_edge(0, id_materia, weight=0)
         # Con correlativas: una arista desde cada correlativa
         else:
@@ -48,5 +49,5 @@ def mostrarGrafo(grafo):
 
 
 dag = nx.DiGraph()
-armarGrafo(dag, pe.perfil)
+armarGrafo(dag, pe.plan)
 mostrarGrafo(dag)

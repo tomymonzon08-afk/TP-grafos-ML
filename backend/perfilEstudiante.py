@@ -44,11 +44,6 @@ class Estudiante:
     def es_recursada(self, id_materia):
         return self.perfil.loc[id_materia, "intentos"] > 0
 
-    def copiar(self):
-        nuevo = Estudiante([])
-        nuevo.perfil = self.perfil.copy()
-        return nuevo
-
     def chequear_corr_aprob(self, correlativas):
         if not correlativas:
             return True
@@ -59,3 +54,7 @@ class Estudiante:
             return True
         else:
             return False
+
+    def mostrar_perfil(self):
+        print(self.perfil)
+

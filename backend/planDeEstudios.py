@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 plan = pd.DataFrame({
-    "id_materia": list(range(1, 46)),
+    "id_materia": list(range(1, 45)),
 
     "nombre": [
         # PRIMER AÑO
