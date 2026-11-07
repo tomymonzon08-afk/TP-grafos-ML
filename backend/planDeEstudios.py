@@ -16,7 +16,7 @@ planDeEstudios = pd.DataFrame({
                 "Análisis Matematico II",
                 "Álgebra Lineal",
                 "Bases de datos",
-                "Aprendizaje Estadístico I",
+                "Aprendizaje Estadístico II",
                 "Probabilidad e Inferencia Estadística",
                 "Laboratorio de Datos",
                 "Prácticas sociales Educativas: Módulo de Intervención Sociocomunitaria",
