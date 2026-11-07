@@ -1,7 +1,5 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import planDeEstudios as pe
-import prob2weig as pw
 
 INICIO = "INICIO"
 
@@ -58,8 +56,3 @@ def mostrarGrafo(grafo, mostrar_pesos=True):
 
 
 
-
-dag = nx.DiGraph()
-armarGrafo(dag, pe.plan)
-pw.asignar_pesos(dag, {1:0.3,2:0.9,4:0.7, 9:0.99999999})
-mostrarGrafo(dag)
