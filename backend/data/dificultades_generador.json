@@ -1,0 +1,62 @@
+{
+  "descripcion": "Dificultad simulada por materia (0=fácil, 1=muy difícil). Solo la usa el generador para simular P(aprobar). NO es feature del modelo y NO debe usarse en el backend.",
+  "por_anio": {
+    "1": 0.45,
+    "2": 0.55,
+    "3": 0.60,
+    "4": 0.60,
+    "5": 0.65,
+    "6": 0.65
+  },
+  "por_materia": {
+    "FILO":   0.45,
+    "HCA":    0.45,
+    "INTRO":  0.45,
+    "CONST":  0.45,
+    "PRIV":   0.45,
+    "TAII":   0.35,
+
+    "OBLIG":  0.55,
+    "HDER":   0.55,
+    "ECON":   0.55,
+    "DDHH":   0.55,
+    "REALES": 0.55,
+    "DANOS":  0.55,
+    "FINAN":  0.60,
+
+    "PENAL1": 0.70,
+    "CONTR":  0.65,
+    "POLIT":  0.60,
+    "TRIB":   0.60,
+    "PROC1":  0.70,
+    "EMPRE":  0.60,
+    "AGRAR":  0.60,
+    "PRAC1":  0.50,
+
+    "PERJUR": 0.60,
+    "PROC2":  0.65,
+    "SOCIO":  0.60,
+    "PENAL2": 0.65,
+    "FAMIL":  0.60,
+    "TRAB":   0.60,
+    "AMBI":   0.60,
+    "CONSUM": 0.60,
+
+    "ADM1":   0.65,
+    "PROC3":  0.70,
+    "SEGCIU": 0.65,
+    "TITVAL": 0.65,
+    "PRAC2":  0.50,
+    "INSOL":  0.65,
+    "ADM2":   0.65,
+    "INTLPUB":0.65,
+    "TRANS":  0.65,
+
+    "INTLPRI":0.65,
+    "FILOD":  0.65,
+    "INTEG":  0.65,
+    "SUCES":  0.65,
+    "PRAC3":  0.50,
+    "IDIOMA": 0.40
+  }
+}

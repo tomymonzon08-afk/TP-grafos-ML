@@ -1,0 +1,82 @@
+{
+  "perfil": {
+    "descripcion": "Estado persistente del estudiante. Es lo que se guarda y se actualiza al simular.",
+    "campos": [
+      {"nombre": "estudiante_id", "tipo": "string", "descripcion": "Identificador único. No se usa como feature."},
+      {"nombre": "aprobadas", "tipo": "dict[string, float]", "descripcion": "Materias aprobadas con su nota (4-10). Clave = id del plan."},
+      {"nombre": "intentos", "tipo": "dict[string, int]", "descripcion": "Cuántas veces cursó cada materia (aprobadas y desaprobadas)."},
+      {"nombre": "cuatrimestre_actual", "tipo": "int", "descripcion": "Cuatrimestre en curso (1-12)."}
+    ]
+  },
+
+  "features_modelo": {
+    "descripcion": "Columnas que recibe el clasificador para predecir P(aprobar | estudiante, materia). Todas se calculan ANTES de cursar la materia.",
+    "features": [
+      {
+        "nombre": "promedio_general",
+        "tipo": "float",
+        "rango": [4, 10],
+        "es_entrada_usuario": false,
+        "descripcion": "Media de notas de las materias aprobadas. 6.0 si no aprobó ninguna."
+      },
+      {
+        "nombre": "promedio_correlativas",
+        "tipo": "float",
+        "rango": [4, 10],
+        "es_entrada_usuario": false,
+        "descripcion": "Media de notas de las correlativas directas de la materia a predecir. 6.0 si no tiene correlativas."
+      },
+      {
+        "nombre": "peor_nota_correlativa",
+        "tipo": "float",
+        "rango": [4, 10],
+        "es_entrada_usuario": false,
+        "descripcion": "Mínimo de notas de correlativas directas. 6.0 si no tiene correlativas."
+      },
+      {
+        "nombre": "veces_recursada",
+        "tipo": "int",
+        "rango": [0, 5],
+        "es_entrada_usuario": false,
+        "descripcion": "Intentos previos de ESTA materia. 0 si es la primera vez. Rango de sanidad: >5 implica simulación anómala o dato inválido."
+      },
+      {
+        "nombre": "n_materias_cuatrimestre",
+        "tipo": "int",
+        "rango": [1, 5],
+        "es_entrada_usuario": true,
+        "descripcion": "Cantidad de materias que cursa en el cuatrimestre. En producción lo elige el usuario."
+      },
+      {
+        "nombre": "tasa_aprobacion_materia",
+        "tipo": "float",
+        "rango": [0, 1],
+        "es_entrada_usuario": false,
+        "descripcion": "Tasa histórica de aprobación de la materia, calculada sobre el dataset. NO es la dificultad del generador."
+      },
+      {
+        "nombre": "avance_carrera",
+        "tipo": "float",
+        "rango": [0, 1],
+        "es_entrada_usuario": false,
+        "descripcion": "Fracción de la carrera aprobada = aprobadas / total del plan. Se muestra como % en el frontend."
+      }
+    ]
+  },
+
+  "target": {
+    "nombre": "aprobo",
+    "tipo": "int",
+    "valores": [0, 1],
+    "descripcion": "1 si aprobó la materia en ese cuatrimestre, 0 si no."
+  },
+
+  "no_usar_como_feature_del_modelo": [
+  {"campo": "nota_final", "razon": "Leakage: es el resultado que queremos predecir."},
+  {"campo": "estudiante_id", "razon": "El modelo memorizaría individuos en lugar de generalizar."},
+  {"campo": "materia", "razon": "Texto crudo; su dificultad se captura con tasa_aprobacion_materia."},
+  {"campo": "cuatrimestre", "razon": "Redundante con avance_carrera."},
+  {"campo": "es_primera_vez", "razon": "Redundante con veces_recursada (es_primera_vez = 1 sii veces_recursada = 0)."},
+  {"campo": "creditos_correlativas_ok", "razon": "Constante por materia en el dataset generado (el generador solo cursa materias con todas las correlativas aprobadas). No aporta información."}
+  ]
+}
