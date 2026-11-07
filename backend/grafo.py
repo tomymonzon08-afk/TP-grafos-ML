@@ -3,25 +3,19 @@ import matplotlib.pyplot as plt
 import planDeEstudios as pe
 import prob2weig as pw
 
-INICIO = "Inicio"
+INICIO = "INICIO"
 
 def armarGrafo(grafo, plan):
-    grafo.add_node(INICIO) 
-
-    for id_materia in plan["id_materia"]:
+    grafo.add_node(INICIO)
+    for id_materia in plan.index:
         grafo.add_node(id_materia)
 
-    for _, fila in plan.iterrows():
-        id_materia = fila["id_materia"]
-        correlativas = fila["correlativas"]
-
-        # Sin correlativas: arista desde el nodo de inicio
-        if not correlativas:   # np.nan no es lista
-            grafo.add_edge(0, id_materia, weight=0)
-        # Con correlativas: una arista desde cada correlativa
+    for id_materia, fila in plan.iterrows():
+        if not fila["correlativas"]:
+            grafo.add_edge(INICIO, id_materia, weight=0)
         else:
-            for correlativa in correlativas:
-                grafo.add_edge(correlativa, id_materia, weight=0)
+            for c in fila["correlativas"]:
+                grafo.add_edge(c, id_materia, weight=0)
 
 
 def mostrarGrafo(grafo, mostrar_pesos=True):
