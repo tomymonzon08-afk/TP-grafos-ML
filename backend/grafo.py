@@ -1,10 +1,12 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-INICIO = "INICIO"
+INICIO = "Recibido"
+RECIBIDO = "Recibido"
 
 def armarGrafo(grafo, plan):
     grafo.add_node(INICIO)
+    grafo.add_node(RECIBIDO)
     for id_materia in plan.index:
         grafo.add_node(id_materia)
 
@@ -14,6 +16,17 @@ def armarGrafo(grafo, plan):
         else:
             for c in fila["correlativas"]:
                 grafo.add_edge(c, id_materia, weight=0)
+
+    for id_materia, fila in plan.iterrows():
+        if grafo.out_degree(id_materia) == 0:
+                grafo.add_edge(id_materia,RECIBIDO,weigth=0)
+
+    
+    
+       
+
+
+
 
 
 def mostrarGrafo(grafo, mostrar_pesos=True):
