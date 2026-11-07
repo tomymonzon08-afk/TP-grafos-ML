@@ -21,12 +21,10 @@ def armarGrafo(grafo, plan):
         if grafo.out_degree(id_materia) == 0:
                 grafo.add_edge(id_materia,RECIBIDO,weigth=0)
 
-    
-    
-       
 
 
-
+def camino_critico(grafo, destino=RECIBIDO):
+    return nx.dijkstra_path(grafo, INICIO, destino, weight="weight")
 
 
 def mostrarGrafo(grafo, mostrar_pesos=True):

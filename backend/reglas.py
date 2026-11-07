@@ -11,3 +11,7 @@ def habilitadas(plan, estudiante):
                 resultado.append(id_materia)
 
     return resultado
+
+def faltantes(plan, estudiante):
+    aprobadas = estudiante.aprobadas_ids()
+    return [id_materia for id_materia in plan.index if id_materia not in aprobadas]
