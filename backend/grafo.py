@@ -1,15 +1,13 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from planDeEstudios import planDeEstudios as pe
-
+import backend.perfilEstudiante as pe
 
 def armarGrafo(grafo, plan):
-    grafo.add_node(0)  # nodo de inicio
+    grafo.add_node(0) 
 
     for id_materia in plan["id_materia"]:
         grafo.add_node(id_materia)
 
-    # Iteramos por fila, usando directamente el id_materia (no el índice)
     for _, fila in plan.iterrows():
         id_materia = fila["id_materia"]
         correlativas = fila["correlativas"]
@@ -47,7 +45,8 @@ def mostrarGrafo(grafo):
     plt.show()
 
 
-dag = nx.DiGraph()
-armarGrafo(dag, pe)
 
+
+dag = nx.DiGraph()
+armarGrafo(dag, pe.perfil)
 mostrarGrafo(dag)

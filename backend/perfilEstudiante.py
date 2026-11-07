@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-planDeEstudios = pd.DataFrame({
+perfil = pd.DataFrame({
     "id_materia": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
     "nombre": ["Laboratorio de Datos I",
                 "Estadística I",
@@ -62,7 +62,30 @@ planDeEstudios = pd.DataFrame({
                      [20,21,22,23] 
                      ],
     "año": [1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4], 
-    "cuatrimestre": [1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,1,1,1,1,2,2,2,2,1,1,1,2,2]
+    "cuatrimestre": [1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,1,1,1,1,2,2,2,2,1,1,1,2,2],
+    "nota": [np.nan] * 28,
 })
+
+
+promedio = perfil["nota"].mean()
+materias_aprobadas = (perfil["nota"] >= 6).sum()
+materias_cursando = 0
+
+def prom_correlativas(correlativas, notas):
+    #Promedio de las notas de las correlativas de una materia.
+    #Devuelve NaN si no tiene correlativas o si ninguna tiene nota
+    if not isinstance(correlativas, list):  # NaN (sin correlativas)
+        return np.nan
+    return notas.reindex(correlativas).mean()  # mean ignora NaN
+
+def actualizar_promedio_corr():
+    notas = perfil.set_index("id_materia")["nota"]
+    perfil["promedio_corr"] = perfil["correlativas"].apply(
+        lambda c: prom_correlativas(c, notas)
+    )
+
+def agregar_nota(id_materia, nota):
+    perfil.loc[perfil["id_materia"] == id_materia, "nota"] = nota
+    actualizar_promedio_corr()
 
 #Elegimos el plan de estudios de la carrera Ciencia de Datos de la FCEyE. Dejamos de lado las materias optativas para este diseño
