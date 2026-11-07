@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import backend.perfilEstudiante as pe
+import planDeEstudios as pe
 
 def armarGrafo(grafo, plan):
     grafo.add_node(0) 
@@ -14,11 +14,11 @@ def armarGrafo(grafo, plan):
 
         # Sin correlativas: arista desde el nodo de inicio
         if not isinstance(correlativas, list):   # np.nan no es lista
-            grafo.add_edge(0, id_materia, weight=0, active=True)
+            grafo.add_edge(0, id_materia, weight=0)
         # Con correlativas: una arista desde cada correlativa
         else:
             for correlativa in correlativas:
-                grafo.add_edge(correlativa, id_materia, weight=0, active=False)
+                grafo.add_edge(correlativa, id_materia, weight=0)
 
 
 def mostrarGrafo(grafo):
