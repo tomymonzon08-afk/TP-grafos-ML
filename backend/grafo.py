@@ -105,11 +105,11 @@ def dijkstra_correlativas(grafo, a=INICIO, dest=None):
 
 
 
-def camino(pred, a, z):
-    if z not in pred:
+def camino(pred, destino):
+    if destino not in pred:
         return None
     ruta = []
-    while z is not None:
-        ruta.append(z)
-        z = pred[z]
+    while destino is not None:
+        ruta.append(destino)
+        destino = pred[destino]
     return ruta[::-1]
