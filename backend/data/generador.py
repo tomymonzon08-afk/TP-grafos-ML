@@ -75,7 +75,7 @@ def sigmoid(x):
 
 def nota_desde(habilidad, dificultad, ruido):
     base = 6.5 + 1.8 * habilidad - 2.0 * (dificultad - 0.55)
-    return float(np.clip(base + RNG.normal(0, 0.9 + ruido), 4, 10))
+    return float(np.clip(base + RNG.normal(0, 0.9 + ruido), 6, 10))
 
 def generar_estudiante(est_id):
     habilidad  = RNG.normal(0, 1)
