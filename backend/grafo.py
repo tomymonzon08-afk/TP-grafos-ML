@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+from math import inf
 
 INICIO = "Recibido"
 RECIBIDO = "Recibido"
@@ -66,4 +67,49 @@ def mostrarGrafo(grafo, mostrar_pesos=True):
     plt.show()
 
 
+def dijkstra_correlativas(grafo, a=INICIO, dest=None):
+    # correlativas de cada nodo = sus predecesores en el grafo (sin contar INICIO)
+    correlativas = {
+        n: [p for p in grafo.predecessors(n) if p != a]
+        for n in grafo.nodes
+    }
 
+    costos = {x: inf for x in grafo}
+    costos[a] = 0
+    pred = {a: None} #pred[x] es el nodo v desde el que se llegó a x con menor costo
+    pendientes = set(grafo)          # nodos pendientes
+    tomados = set()         # nodos ya fijados
+    orden = []
+
+    while pendientes and (dest is None or dest in pendientes):
+        # candidatos: alcanzables y con todas sus correlativas ya tomadas
+        candidatos = [
+            x for x in pendientes
+            if costos[x] < inf and all(c in tomados for c in correlativas[x])
+        ]
+        if not candidatos:
+            break
+
+        v = min(candidatos, key=lambda x: costos[x])   # el de menor peso que cumple
+        pendientes.remove(v)
+        tomados.add(v)
+        orden.append(v)
+
+        for x, datos in grafo[v].items():
+            w = datos["weight"]
+            if x in pendientes and costos[v] + w < costos[x]:
+                costos[x] = costos[v] + w
+                pred[x] = v
+
+    return costos, pred, orden
+
+
+
+def camino(pred, a, z):
+    if z not in pred:
+        return None
+    ruta = []
+    while z is not None:
+        ruta.append(z)
+        z = pred[z]
+    return ruta[::-1]
