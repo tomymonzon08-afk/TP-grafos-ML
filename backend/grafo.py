@@ -24,10 +24,6 @@ def armarGrafo(grafo, plan):
 
 
 
-def camino_critico(grafo, destino=RECIBIDO):
-    return nx.dijkstra_path(grafo, INICIO, destino, weight="weight")
-
-
 def mostrarGrafo(grafo, mostrar_pesos=True):
     # Layout por capas: la "generación" de cada nodo en el DAG
     for capa, nodos in enumerate(nx.topological_generations(grafo)):
