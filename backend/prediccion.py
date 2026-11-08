@@ -155,4 +155,4 @@ if __name__ == "__main__":
     #num__promedio_correlativas      0.403291
     #num__promedio_general           0.477423
 
-    joblib.dump(modelo, "modelo_aprobacion.joblib")
+joblib.dump(modelo, Path(__file__).parent / "modelo_aprobacion.joblib")
