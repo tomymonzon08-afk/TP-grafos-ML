@@ -3,9 +3,8 @@ import joblib
 import pandas as pd
 import networkx as nx
 from backend.perfilEstudiante import APROBADA
+from backend.grafo import INICIO, RECIBIDO
 
-INICIO = "INICIO"
-RECIBIDO = "RECIBIDO"
 DEFECTO = 6.0   # misma regla que el generador
 
 _modelo = joblib.load(Path(__file__).parent / "modelo_aprobacion.joblib")

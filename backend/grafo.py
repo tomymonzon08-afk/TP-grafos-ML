@@ -2,8 +2,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from math import inf
 
-INICIO = "Recibido"
-RECIBIDO = "Recibido"
+INICIO = "INICIO"
+RECIBIDO = "RECIBIDO"
 
 def armarGrafo(grafo, plan):
     grafo.add_node(INICIO)
@@ -20,7 +20,7 @@ def armarGrafo(grafo, plan):
 
     for id_materia, fila in plan.iterrows():
         if grafo.out_degree(id_materia) == 0:
-                grafo.add_edge(id_materia,RECIBIDO,weigth=0)
+                grafo.add_edge(id_materia,RECIBIDO,weight=0)
 
 
 
