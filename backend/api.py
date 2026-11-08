@@ -12,7 +12,7 @@ from backend.prob2weig import asignar_pesos
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],   # el puerto de Vite
+    allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -21,9 +21,14 @@ BASE = nx.DiGraph()
 armarGrafo(BASE, pe.plan)
 
 
+class Registro(BaseModel):
+    aprobada: bool = False
+    nota: float | None = None   # solo si aprobada (6 a 10)
+    veces: int = 0              # veces que la cursó
+
+
 class Perfil(BaseModel):
-    aprobadas: dict[int, float] = {}   # {id_materia: nota}
-    desaprobadas: list[int] = []
+    historial: dict[int, Registro] = {}   # {id_materia: Registro}
     n_materias: int = 3
 
 
@@ -36,23 +41,38 @@ def plan():
     ]
 
 
-@app.post("/sugerencia")
-def sugerencia(p: Perfil):
-    for m in p.aprobadas:
+def validar(historial: dict[int, Registro]):
+    aprobadas = {m for m, r in historial.items() if r.aprobada}
+    for m, r in historial.items():
         if m not in pe.plan.index:
-            raise HTTPException(status_code=400, detail=f"La materia {m} no existe")
-        faltan = [c for c in pe.plan.loc[m, "correlativas"] if c not in p.aprobadas]
+            raise HTTPException(400, f"La materia {m} no existe")
+        if r.aprobada:
+            if r.nota is None or not (6 <= r.nota <= 10):
+                raise HTTPException(400, f"La materia {m} aprobada necesita nota entre 6 y 10")
+            if r.veces < 1:
+                raise HTTPException(400, f"La materia {m} aprobada debe tener al menos 1 cursada")
+        elif r.veces < 1 or r.veces > 5:
+            raise HTTPException(400, f"La materia {m}: veces debe estar entre 1 y 5")
+        faltan = [c for c in pe.plan.loc[m, "correlativas"] if c not in aprobadas]
         if faltan:
             raise HTTPException(
-                status_code=400,
-                detail=f"La materia {m} no puede estar aprobada: faltan las correlativas {faltan}",
+                400, f"La materia {m} tiene registro pero faltan las correlativas {faltan}"
             )
-    n = max(1, min(4, p.n_materias))       # el generador solo vio 1 a 4
+
+
+@app.post("/sugerencia")
+def sugerencia(p: Perfil):
+    validar(p.historial)
+    n = max(1, min(4, p.n_materias))     # el generador solo vio 1 a 4
+
+    # Armamos el perfil del estudiante con el historial
     est = Estudiante(list(pe.plan.index))
-    for m, nota in p.aprobadas.items():
-        est.registrar(m, APROBADA, nota)
-    for m in p.desaprobadas:
-        est.registrar(m, DESAPROBADA)
+    for m, r in p.historial.items():
+        if r.aprobada:
+            est.registrar(m, APROBADA, r.nota)
+        else:
+            est.registrar(m, DESAPROBADA)
+        est.perfil.loc[m, "intentos"] = r.veces   # el modelo lo lee como veces_recursada
 
     g = BASE.copy()
     probs = predecir_probabilidades(pe.plan, g, est, n)

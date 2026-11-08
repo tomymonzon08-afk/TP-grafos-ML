@@ -5,40 +5,49 @@ import "@xyflow/react/dist/style.css";
 const API = "http://localhost:8000";
 
 type Materia = { id: number; nombre: string; anio: number; correlativas: number[] };
+type Registro = { aprobada: boolean; nota: number | null; veces: number };
 type Resultado = {
   probabilidades: Record<string, number>;
   secuencia: number[];
   aprobadas: number[];
 };
 
-// rojo = riesgosa, verde = segura
 const color = (p: number) => `hsl(${Math.round(p * 120)}, 70%, 75%)`;
 
 export default function App() {
   const [plan, setPlan] = useState<Materia[]>([]);
-  const [aprobadas, setAprobadas] = useState<Record<number, number>>({});
+  const [historial, setHistorial] = useState<Record<number, Registro>>({});
+  const [seleccionada, setSeleccionada] = useState<number | null>(null);
   const [nMaterias, setNMaterias] = useState(3);
   const [res, setRes] = useState<Resultado | null>(null);
   const [verCamino, setVerCamino] = useState(false);
-  const [aviso, setAviso] = useState(""); // NUEVO: mensaje de error
+  const [aviso, setAviso] = useState("");
 
-  // NUEVO: acceso rápido a una materia por su id
   const porId = useMemo(() => new Map(plan.map(m => [m.id, m])), [plan]);
+
+  // ids aprobados, derivados del historial
+  const aprobadas = useMemo(() => {
+    const a: Record<number, number> = {};
+    for (const [id, r] of Object.entries(historial))
+      if (r.aprobada) a[Number(id)] = r.nota ?? 7;
+    return a;
+  }, [historial]);
 
   useEffect(() => {
     fetch(`${API}/plan`).then(r => r.json()).then(setPlan);
   }, []);
 
+  // cada cambio del historial recalcula las probabilidades en el backend
   useEffect(() => {
     fetch(`${API}/sugerencia`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ aprobadas, desaprobadas: [], n_materias: nMaterias }),
+      body: JSON.stringify({ historial, n_materias: nMaterias }),
     })
       .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
       .then(setRes)
       .catch(() => {});
-  }, [aprobadas, nMaterias]);
+  }, [historial, nMaterias]);
 
   const orden = useMemo(() => {
     const o: Record<number, number> = {};
@@ -46,28 +55,78 @@ export default function App() {
     return o;
   }, [res]);
 
+  // Guarda (o borra) el registro de una materia. Si deja de estar aprobada,
+  // se borra también el registro de todo lo que dependa de ella.
+  const guardar = (id: number, reg: Registro | null) => {
+    setHistorial(h => {
+      const n = { ...h };
+      if (reg === null) delete n[id];
+      else n[id] = reg;
+
+      if (!reg?.aprobada) {
+        const quitar = new Set<number>([id]);
+        let cambio = true;
+        while (cambio) {
+          cambio = false;
+          for (const x of plan) {
+            if (!quitar.has(x.id) && x.correlativas.some(c => quitar.has(c))) {
+              quitar.add(x.id);
+              cambio = true;
+            }
+          }
+        }
+        let borradas = 0;
+        quitar.forEach(q => {
+          if (q !== id && q in n) {
+            delete n[q];
+            borradas++;
+          }
+        });
+        setAviso(borradas > 0 ? `Se quitó el historial de ${borradas} materia(s) que dependían de esta.` : "");
+      } else {
+        setAviso("");
+      }
+      return n;
+    });
+  };
+
+  const abrir = (id: number) => {
+    const m = porId.get(id);
+    if (!m) return;
+    const faltan = m.correlativas.filter(c => !(c in aprobadas));
+    if (faltan.length > 0) {
+      const nombres = faltan.map(c => porId.get(c)?.nombre).join(", ");
+      setAviso(`No podés cargar "${m.nombre}": falta aprobar ${nombres}.`);
+      return;
+    }
+    setAviso("");
+    setSeleccionada(id);
+  };
+
   const nodes: Node[] = useMemo(() => {
     const fila: Record<number, number> = {};
     return plan.map(m => {
       fila[m.anio] = (fila[m.anio] ?? -1) + 1;
       const p = res?.probabilidades[m.id];
-      const aprobada = m.id in aprobadas;
+      const reg = historial[m.id];
+      const aprobada = !!reg?.aprobada;
       const enCamino = verCamino && m.id in orden;
       const apagada = verCamino && !enCamino;
-      // NUEVO: bloqueada = no está aprobada y le faltan correlativas
       const bloqueada = !aprobada && !m.correlativas.every(c => c in aprobadas);
 
       return {
         id: String(m.id),
-        position: { x: (m.anio - 1) * 240, y: fila[m.anio] * 80 },
+        position: { x: (m.anio - 1) * 240, y: fila[m.anio] * 90 },
         data: {
           label: (
             <div>
               {enCamino && <strong style={{ color: "#1d4ed8" }}>#{orden[m.id]} </strong>}
               {bloqueada && "🔒 "}
               {m.id}. {m.nombre}
+              {aprobada && <div>✔ Nota {reg.nota} · cursada {reg.veces}x</div>}
+              {!aprobada && reg && <div>✖ Sin aprobar · cursada {reg.veces}x</div>}
               {p !== undefined && !aprobada && (
-                <div style={{ opacity: 0.7 }}>{Math.round(p * 100)}%</div>
+                <div style={{ opacity: 0.7 }}>{Math.round(p * 100)}% de aprobar</div>
               )}
             </div>
           ),
@@ -76,17 +135,17 @@ export default function App() {
           background: aprobada ? "#d4d4d4" : p === undefined ? "#fff" : color(p),
           width: 210,
           fontSize: 11,
-          cursor: bloqueada ? "not-allowed" : "pointer", // NUEVO
-          border: enCamino
-            ? "3px solid #1d4ed8"
-            : bloqueada
-            ? "1px dashed #999"
-            : "1px solid #888", // NUEVO
+          cursor: bloqueada ? "not-allowed" : "pointer",
+          border:
+            seleccionada === m.id ? "3px solid #000"
+            : enCamino ? "3px solid #1d4ed8"
+            : bloqueada ? "1px dashed #999"
+            : "1px solid #888",
           opacity: apagada ? 0.35 : 1,
         },
       };
     });
-  }, [plan, res, aprobadas, verCamino, orden]);
+  }, [plan, res, historial, aprobadas, verCamino, orden, seleccionada]);
 
   const edges: Edge[] = useMemo(
     () =>
@@ -95,59 +154,78 @@ export default function App() {
           id: `${c}-${m.id}`,
           source: String(c),
           target: String(m.id),
-          style: {
-            stroke: verCamino && c in orden && m.id in orden ? "#1d4ed8" : "#bbb",
-          },
+          style: { stroke: verCamino && c in orden && m.id in orden ? "#1d4ed8" : "#bbb" },
         }))
       ),
     [plan, verCamino, orden]
   );
 
-  // NUEVO: toggle con validación de correlativas
-  const toggle = (id: number) => {
-    const m = porId.get(id);
-    if (!m) return;
+  // ---- Panel de edición de la materia seleccionada ----
+  const editor = (() => {
+    if (seleccionada === null) return null;
+    const m = porId.get(seleccionada);
+    if (!m) return null;
+    const reg = historial[seleccionada];
+    const estado = reg ? (reg.aprobada ? "aprobada" : "cursada") : "sin";
 
-    // Caso 1: ya está aprobada -> se desaprueba, junto con las que dependen de ella
-    if (id in aprobadas) {
-      const quitar = new Set<number>([id]);
-      let cambio = true;
-      while (cambio) {
-        cambio = false;
-        for (const x of plan) {
-          if (
-            !quitar.has(x.id) &&
-            x.id in aprobadas &&
-            x.correlativas.some(c => quitar.has(c))
-          ) {
-            quitar.add(x.id);
-            cambio = true;
-          }
-        }
-      }
-      setAprobadas(a => {
-        const n = { ...a };
-        quitar.forEach(q => delete n[q]);
-        return n;
-      });
-      setAviso(
-        quitar.size > 1
-          ? `Se quitaron también ${quitar.size - 1} materia(s) que dependían de "${m.nombre}".`
-          : ""
-      );
-      return;
-    }
+    const cambiarEstado = (e: string) => {
+      if (e === "sin") guardar(seleccionada, null);
+      else if (e === "cursada")
+        guardar(seleccionada, {
+          aprobada: false, nota: null,
+          veces: reg && !reg.aprobada ? reg.veces : 1,
+        });
+      else
+        guardar(seleccionada, {
+          aprobada: true, nota: reg?.nota ?? 7,
+          veces: Math.max(1, reg?.veces ?? 1),
+        });
+    };
 
-    // Caso 2: no está aprobada -> solo se aprueba si todas sus correlativas lo están
-    const faltan = m.correlativas.filter(c => !(c in aprobadas));
-    if (faltan.length > 0) {
-      const nombres = faltan.map(c => porId.get(c)?.nombre).join(", ");
-      setAviso(`No podés aprobar "${m.nombre}": falta aprobar ${nombres}.`);
-      return;
-    }
-    setAprobadas(a => ({ ...a, [id]: 7 }));
-    setAviso("");
-  };
+    return (
+      <div style={{ borderBottom: "1px solid #ddd", paddingBottom: 12, marginBottom: 12 }}>
+        <h3 style={{ marginTop: 0 }}>{m.id}. {m.nombre}</h3>
+
+        <label style={{ display: "block", marginBottom: 8 }}>
+          Estado:{" "}
+          <select value={estado} onChange={e => cambiarEstado(e.target.value)}>
+            <option value="sin">Sin cursar</option>
+            <option value="cursada">La cursé y no la aprobé</option>
+            <option value="aprobada">Aprobada</option>
+          </select>
+        </label>
+
+        {reg?.aprobada && (
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Nota (6 a 10):{" "}
+            <input
+              type="number" min={6} max={10} step={0.5} value={reg.nota ?? 7}
+              onChange={e => {
+                const v = Math.min(10, Math.max(6, Number(e.target.value) || 6));
+                guardar(seleccionada, { ...reg, nota: v });
+              }}
+            />
+          </label>
+        )}
+
+        {reg && (
+          <label style={{ display: "block", marginBottom: 8 }}>
+            {reg.aprobada ? "Veces que la cursó (contando la que aprobó)" : "Veces que la cursó sin aprobar"}:{" "}
+            <input
+              type="number" min={1} max={reg.aprobada ? 6 : 5} value={reg.veces}
+              onChange={e => {
+                const max = reg.aprobada ? 6 : 5;
+                const v = Math.min(max, Math.max(1, Math.round(Number(e.target.value)) || 1));
+                guardar(seleccionada, { ...reg, veces: v });
+              }}
+            />
+          </label>
+        )}
+
+        <button onClick={() => setSeleccionada(null)}>Cerrar</button>
+      </div>
+    );
+  })();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -178,11 +256,14 @@ export default function App() {
           />
         </label>
 
+        <button onClick={() => { setHistorial({}); setSeleccionada(null); setAviso(""); }}>
+          Borrar historial
+        </button>
+
         <span style={{ fontSize: 12 }}>
-          🟥 riesgosa → 🟩 segura · gris = aprobada · 🔒 = faltan correlativas
+          🟥 riesgosa → 🟩 segura · gris = aprobada · 🔒 = faltan correlativas · click para cargar historial
         </span>
 
-        {/* NUEVO: aviso de error */}
         {aviso && <span style={{ color: "#b91c1c", fontSize: 12 }}>{aviso}</span>}
       </header>
 
@@ -191,27 +272,32 @@ export default function App() {
           <ReactFlow
             nodes={nodes} edges={edges} fitView
             nodesDraggable={false}
-            onNodeClick={(_, n) => toggle(Number(n.id))}
+            onNodeClick={(_, n) => abrir(Number(n.id))}
           >
             <Background />
             <Controls />
           </ReactFlow>
         </div>
 
-        {verCamino && (
-          <aside style={{ width: 300, padding: 12, overflow: "auto", borderLeft: "1px solid #ddd" }}>
-            <h3 style={{ marginTop: 0 }}>Camino sugerido</h3>
-            <p style={{ fontSize: 12, opacity: 0.7 }}>
-              Orden de cursada que respeta las correlatividades y prioriza las materias de menor riesgo.
-            </p>
-            <ol>
-              {res?.secuencia.map(id => (
-                <li key={id}>
-                  {porId.get(id)?.nombre}{" "}
-                  ({Math.round((res.probabilidades[id] ?? 0) * 100)}%)
-                </li>
-              ))}
-            </ol>
+        {(seleccionada !== null || verCamino) && (
+          <aside style={{ width: 320, padding: 12, overflow: "auto", borderLeft: "1px solid #ddd" }}>
+            {editor}
+            {verCamino && (
+              <>
+                <h3 style={{ marginTop: 0 }}>Camino sugerido</h3>
+                <p style={{ fontSize: 12, opacity: 0.7 }}>
+                  Orden de cursada que respeta las correlatividades y prioriza las materias de menor riesgo.
+                </p>
+                <ol>
+                  {res?.secuencia.map(id => (
+                    <li key={id}>
+                      {porId.get(id)?.nombre}{" "}
+                      ({Math.round((res.probabilidades[id] ?? 0) * 100)}%)
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
           </aside>
         )}
       </div>
