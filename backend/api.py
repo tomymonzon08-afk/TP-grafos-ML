@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import networkx as nx
@@ -38,6 +38,15 @@ def plan():
 
 @app.post("/sugerencia")
 def sugerencia(p: Perfil):
+    for m in p.aprobadas:
+        if m not in pe.plan.index:
+            raise HTTPException(status_code=400, detail=f"La materia {m} no existe")
+        faltan = [c for c in pe.plan.loc[m, "correlativas"] if c not in p.aprobadas]
+        if faltan:
+            raise HTTPException(
+                status_code=400,
+                detail=f"La materia {m} no puede estar aprobada: faltan las correlativas {faltan}",
+            )
     n = max(1, min(4, p.n_materias))       # el generador solo vio 1 a 4
     est = Estudiante(list(pe.plan.index))
     for m, nota in p.aprobadas.items():
