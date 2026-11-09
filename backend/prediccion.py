@@ -54,12 +54,12 @@ if __name__ == "__main__":
     est_train = set(grupos.iloc[idx_train])
     est_test  = set(grupos.iloc[idx_test])
 
-    #assert len(est_train & est_test) == 0, "hay estudiantes repetidos"
+    assert len(est_train & est_test) == 0, "hay estudiantes repetidos"
 
-    #print(f"Train: {len(X_train)} filas, {len(est_train)} estudiantes")
-    #print(f"Test:  {len(X_test)} filas, {len(est_test)} estudiantes")
-    #print(f"% aprobó en train: {y_train.mean():.3f}")
-    #print(f"% aprobó en test:  {y_test.mean():.3f}")
+    print(f"Train: {len(X_train)} filas, {len(est_train)} estudiantes")
+    print(f"Test:  {len(X_test)} filas, {len(est_test)} estudiantes")
+    print(f"% aprobó en train: {y_train.mean():.3f}")
+    print(f"% aprobó en test:  {y_test.mean():.3f}")
 
     #preparación y entrenamiento
 
@@ -75,8 +75,8 @@ if __name__ == "__main__":
 
     pipe.fit(X_train, y_train)   
 
-    #print(f"Accuracy train: {pipe.score(X_train, y_train):.3f}")
-    #print(f"Accuracy test:  {pipe.score(X_test, y_test):.3f}")
+    print(f"Accuracy train: {pipe.score(X_train, y_train):.3f}")
+    print(f"Accuracy test:  {pipe.score(X_test, y_test):.3f}")
 
     #medición de hiperparametros
 
@@ -93,11 +93,11 @@ if __name__ == "__main__":
 
     busqueda.fit(X_train, y_train, groups=g_train)  
 
-    #print(busqueda.best_params_)
+    print(busqueda.best_params_)
     print(busqueda.best_score_)
 
-    #res = pd.DataFrame(busqueda.cv_results_)
-    #print(res[["param_clf__C", "mean_test_score", "std_test_score"]])
+    res = pd.DataFrame(busqueda.cv_results_)
+    print(res[["param_clf__C", "mean_test_score", "std_test_score"]])
 
     #Evaluación de Test
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     #No elijo 0.8 porque ya son demasiado casos falsos negativos
     #Pero como a nosotros no nos importa acá si el alumno va a aprobar o no ,si no que las probabilidades, 
     #no damos mucho caso por ahora a esto
-    #evaluar(modelo) 
+    evaluar(modelo) 
     print("log loss: ", log_loss(y_test, proba))  
 
     #chequeo de probabilidades
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         prob_predicha=("prob_predicha", "mean"),
         tasa_real=("real", "mean"),
     )
-    #print(calib.round(3))
+    print(calib.round(3))
 
     #Interpretación del modelo con los coeficientes
 
