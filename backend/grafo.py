@@ -98,14 +98,3 @@ def dijkstra_correlativas(grafo, a=INICIO, dest=None):
                 pred[x] = v
 
     return costos, pred, orden
-
-
-
-def camino(pred, destino):
-    if destino not in pred:
-        return None
-    ruta = []
-    while destino is not None:
-        ruta.append(destino)
-        destino = pred[destino]
-    return ruta[::-1]
