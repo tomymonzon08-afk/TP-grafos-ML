@@ -7,20 +7,22 @@ const API = "http://localhost:8000";
 type Materia = { id: number; nombre: string; anio: number; correlativas: number[] };
 type Registro = { aprobada: boolean; nota: number | null; veces: number };
 type Historial = Record<number, Registro>;
+type Objetivo = { id: number; rama: number[]; prob_conjunta: number };
 type Resultado = {
   probabilidades: Record<string, number>;
   secuencia: number[];
   aprobadas: number[];
+  objetivo: Objetivo | null;
 };
 type Simulacion = { id: number; tipo: "aprueba" | "desaprueba"; nota: number };
 
 const color = (p: number) => `hsl(${Math.round(p * 120)}, 70%, 75%)`;
 
-const pedir = (historial: Historial, n: number): Promise<Resultado> =>
+const pedir = (historial: Historial, n: number, objetivo: number | null): Promise<Resultado> =>
   fetch(`${API}/sugerencia`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ historial, n_materias: n }),
+    body: JSON.stringify({ historial, n_materias: n, objetivo }),
   }).then(r => (r.ok ? r.json() : Promise.reject(r.status)));
 
 export default function App() {
@@ -34,6 +36,7 @@ export default function App() {
   const [aviso, setAviso] = useState("");
   const [sim, setSim] = useState<Simulacion | null>(null);
   const [notaSim, setNotaSim] = useState(8);
+  const [objetivo, setObjetivo] = useState<number | null>(null); // NUEVO
 
   const porId = useMemo(() => new Map(plan.map(m => [m.id, m])), [plan]);
 
@@ -43,10 +46,8 @@ export default function App() {
     return a;
   };
 
-  // Historial real
   const aprobadas = useMemo(() => idsAprobadas(historial), [historial]);
 
-  // Historial simulado: copia del real + el cambio hipotético
   const historialSim = useMemo<Historial | null>(() => {
     if (!sim) return null;
     const veces = (historial[sim.id]?.veces ?? 0) + 1;
@@ -59,7 +60,6 @@ export default function App() {
     };
   }, [sim, historial]);
 
-  // Lo que se dibuja: el escenario simulado si hay simulación, si no el real
   const hVista = historialSim ?? historial;
   const aprobadasVista = useMemo(() => idsAprobadas(hVista), [hVista]);
   const vista = sim && resSim ? resSim : res;
@@ -71,30 +71,40 @@ export default function App() {
   // Pedido con el historial real
   useEffect(() => {
     let vivo = true;
-    pedir(historial, nMaterias)
+    pedir(historial, nMaterias, objetivo)
       .then(r => vivo && setRes(r))
       .catch(() => {});
     return () => { vivo = false; };
-  }, [historial, nMaterias]);
+  }, [historial, nMaterias, objetivo]);
 
   // Pedido con el historial simulado
   useEffect(() => {
     if (!historialSim) { setResSim(null); return; }
     let vivo = true;
-    pedir(historialSim, nMaterias)
+    pedir(historialSim, nMaterias, objetivo)
       .then(r => vivo && setResSim(r))
       .catch(() => {});
     return () => { vivo = false; };
-  }, [historialSim, nMaterias]);
+  }, [historialSim, nMaterias, objetivo]);
+
+  // NUEVO: lista activa. Con objetivo, solo la rama; sin objetivo, toda la secuencia.
+  const lista = useMemo(
+    () => (objetivo !== null && vista?.objetivo ? vista.objetivo.rama : vista?.secuencia ?? []),
+    [vista, objetivo]
+  );
 
   const orden = useMemo(() => {
     const o: Record<number, number> = {};
-    vista?.secuencia.forEach((id, i) => (o[id] = i + 1));
+    lista.forEach((id, i) => (o[id] = i + 1));
     return o;
-  }, [vista]);
+  }, [lista]);
 
-  // Guarda (o borra) el registro de una materia; si deja de estar aprobada,
-  // borra también el historial de lo que dependa de ella.
+  // NUEVO: conjunto de materias de la rama (para resaltar)
+  const enRamaSet = useMemo(
+    () => new Set<number>(objetivo !== null && vista?.objetivo ? vista.objetivo.rama : []),
+    [vista, objetivo]
+  );
+
   const guardar = (id: number, reg: Registro | null) => {
     setHistorial(h => {
       const n = { ...h };
@@ -135,7 +145,7 @@ export default function App() {
       return;
     }
     setAviso("");
-    if (id !== seleccionada) setSim(null); // cambiar de materia descarta la simulación
+    if (id !== seleccionada) setSim(null);
     setSeleccionada(id);
   };
 
@@ -145,7 +155,6 @@ export default function App() {
     setSim(null);
   };
 
-  // ---- Comparación antes / después ----
   const comparacion = useMemo(() => {
     if (!sim || !res || !resSim) return null;
     const cambios = Object.keys(res.probabilidades)
@@ -176,10 +185,18 @@ export default function App() {
       const p = vista?.probabilidades[m.id];
       const reg = hVista[m.id];
       const aprobada = !!reg?.aprobada;
-      const enCamino = verCamino && m.id in orden;
-      const apagada = verCamino && !enCamino;
       const bloqueada = !aprobada && !m.correlativas.every(c => c in aprobadasVista);
       const esSim = sim?.id === m.id;
+      const esObjetivo = objetivo === m.id;
+      const enRama = enRamaSet.has(m.id);
+      const enCamino = verCamino && m.id in orden;
+
+      // Se atenúa lo que no importa: con objetivo, todo lo que no es de la rama;
+      // sin objetivo, lo que no está en el camino sugerido (si se está viendo).
+      const apagada =
+        objetivo !== null && vista?.objetivo
+          ? !enRama && !esObjetivo
+          : verCamino && !enCamino;
 
       return {
         id: String(m.id),
@@ -188,6 +205,7 @@ export default function App() {
           label: (
             <div>
               {enCamino && <strong style={{ color: "#1d4ed8" }}>#{orden[m.id]} </strong>}
+              {esObjetivo && "🎯 "}
               {bloqueada && "🔒 "}
               {esSim && "🧪 "}
               {m.id}. {m.nombre}
@@ -206,27 +224,39 @@ export default function App() {
           cursor: bloqueada ? "not-allowed" : "pointer",
           border:
             esSim ? "3px solid #7c3aed"
+            : esObjetivo ? "4px solid #d97706"
             : seleccionada === m.id ? "3px solid #000"
+            : enRama ? "3px solid #f59e0b"
             : enCamino ? "3px solid #1d4ed8"
             : bloqueada ? "1px dashed #999"
             : "1px solid #888",
-          opacity: apagada ? 0.35 : 1,
+          opacity: apagada ? 0.3 : 1,
         },
       };
     });
-  }, [plan, vista, hVista, aprobadasVista, verCamino, orden, seleccionada, sim]);
+  }, [plan, vista, hVista, aprobadasVista, verCamino, orden, seleccionada, sim, objetivo, enRamaSet]);
 
   const edges: Edge[] = useMemo(
     () =>
       plan.flatMap(m =>
-        m.correlativas.map(c => ({
-          id: `${c}-${m.id}`,
-          source: String(c),
-          target: String(m.id),
-          style: { stroke: verCamino && c in orden && m.id in orden ? "#1d4ed8" : "#bbb" },
-        }))
+        m.correlativas.map(c => {
+          const enRamaArista =
+            objetivo !== null &&
+            (enRamaSet.has(c) || c === objetivo) &&
+            (enRamaSet.has(m.id) || m.id === objetivo);
+          const enCaminoArista = verCamino && c in orden && m.id in orden;
+          return {
+            id: `${c}-${m.id}`,
+            source: String(c),
+            target: String(m.id),
+            style: {
+              stroke: enRamaArista ? "#f59e0b" : enCaminoArista ? "#1d4ed8" : "#bbb",
+              strokeWidth: enRamaArista ? 3 : 1,
+            },
+          };
+        })
       ),
-    [plan, verCamino, orden]
+    [plan, verCamino, orden, objetivo, enRamaSet]
   );
 
   // ---- Panel de edición de la materia seleccionada ----
@@ -325,7 +355,42 @@ export default function App() {
     );
   })();
 
-  // ---- Panel de comparación ----
+  // ---- NUEVO: panel de la materia objetivo ----
+  const panelObjetivo = (() => {
+    if (objetivo === null || !vista?.objetivo) return null;
+    const o = vista.objetivo;
+    const m = porId.get(objetivo);
+    return (
+      <div style={{ background: "#fffbeb", padding: 10, borderRadius: 6, marginBottom: 12 }}>
+        <h3 style={{ marginTop: 0 }}>🎯 Objetivo: {m?.nombre}</h3>
+        {o.rama.length === 0 ? (
+          <p>Ya aprobaste esta materia.</p>
+        ) : (
+          <>
+            <p style={{ margin: "4px 0" }}>
+              Te faltan <strong>{o.rama.length}</strong> materia(s) para llegar (contando la objetivo).
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              Probabilidad de aprobarlas todas:{" "}
+              <strong>{(o.prob_conjunta * 100).toFixed(1)}%</strong>
+            </p>
+            <p style={{ fontSize: 11, opacity: 0.7, margin: "4px 0" }}>
+              Es el producto de las probabilidades de cada una (supone independencia).
+            </p>
+            <ol style={{ paddingLeft: 18 }}>
+              {o.rama.map(id => (
+                <li key={id}>
+                  {porId.get(id)?.nombre}{" "}
+                  ({Math.round((vista.probabilidades[id] ?? 0) * 100)}%)
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+      </div>
+    );
+  })();
+
   const panelComparacion =
     sim && comparacion && (
       <div style={{ marginBottom: 12 }}>
@@ -358,11 +423,11 @@ export default function App() {
 
         <h4 style={{ marginBottom: 4 }}>Secuencia sugerida</h4>
         <div style={{ display: "flex", gap: 8, fontSize: 11 }}>
-          {[["Antes", comparacion.antes], ["Después", comparacion.despues]].map(([titulo, lista]) => (
+          {[["Antes", comparacion.antes], ["Después", comparacion.despues]].map(([titulo, l]) => (
             <div key={titulo as string} style={{ flex: 1 }}>
               <strong>{titulo as string}</strong>
               <ol style={{ paddingLeft: 18, margin: "4px 0" }}>
-                {(lista as number[]).map(id => (
+                {(l as number[]).map(id => (
                   <li key={id}>{porId.get(id)?.nombre}</li>
                 ))}
               </ol>
@@ -396,6 +461,23 @@ export default function App() {
           {verCamino ? "Ocultar camino sugerido" : "Ver camino sugerido"}
         </button>
 
+        {/* NUEVO: selector de materia objetivo */}
+        <label>
+          🎯 Quiero llegar a:{" "}
+          <select
+            value={objetivo ?? ""}
+            onChange={e => setObjetivo(e.target.value === "" ? null : Number(e.target.value))}
+            style={{ maxWidth: 260 }}
+          >
+            <option value="">(ninguna: ver todo el plan)</option>
+            {plan.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.anio}° · {m.nombre}{m.id in aprobadas ? " ✔" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label>
           Materias por cuatrimestre: {nMaterias}{" "}
           <input
@@ -409,7 +491,7 @@ export default function App() {
         </button>
 
         <span style={{ fontSize: 12 }}>
-          🟥 riesgosa → 🟩 segura · gris = aprobada · 🔒 = faltan correlativas · click para cargar historial
+          🟥 riesgosa → 🟩 segura · gris = aprobada · 🔒 = faltan correlativas · naranja = rama al objetivo
         </span>
 
         {sim && (
@@ -432,11 +514,12 @@ export default function App() {
           </ReactFlow>
         </div>
 
-        {(seleccionada !== null || verCamino || sim) && (
+        {(seleccionada !== null || verCamino || sim || objetivo !== null) && (
           <aside style={{ width: 380, padding: 12, overflow: "auto", borderLeft: "1px solid #ddd" }}>
             {editor}
             {panelComparacion}
-            {verCamino && (
+            {panelObjetivo}
+            {verCamino && objetivo === null && (
               <>
                 <h3 style={{ marginTop: 0 }}>Camino sugerido{sim ? " (simulado)" : ""}</h3>
                 <p style={{ fontSize: 12, opacity: 0.7 }}>

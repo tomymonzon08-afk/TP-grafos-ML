@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import math
 import networkx as nx
 
 from backend import planDeEstudios as pe
@@ -30,6 +31,7 @@ class Registro(BaseModel):
 class Perfil(BaseModel):
     historial: dict[int, Registro] = {}   # {id_materia: Registro}
     n_materias: int = 3
+    objetivo: int | None = None           # NUEVO: materia a la que quiere llegar
 
 
 @app.get("/plan")
@@ -63,16 +65,17 @@ def validar(historial: dict[int, Registro]):
 @app.post("/sugerencia")
 def sugerencia(p: Perfil):
     validar(p.historial)
+    if p.objetivo is not None and p.objetivo not in pe.plan.index:
+        raise HTTPException(400, f"La materia objetivo {p.objetivo} no existe")
     n = max(1, min(4, p.n_materias))     # el generador solo vio 1 a 4
 
-    # Armamos el perfil del estudiante con el historial
     est = Estudiante(list(pe.plan.index))
     for m, r in p.historial.items():
         if r.aprobada:
             est.registrar(m, APROBADA, r.nota)
         else:
             est.registrar(m, DESAPROBADA)
-        est.perfil.loc[m, "intentos"] = r.veces   # el modelo lo lee como veces_recursada
+        est.perfil.loc[m, "intentos"] = r.veces
 
     g = BASE.copy()
     probs = predecir_probabilidades(pe.plan, g, est, n)
@@ -82,8 +85,22 @@ def sugerencia(p: Perfil):
     aprobadas = est.aprobadas_ids()
     secuencia = [int(m) for m in orden
                  if m not in (INICIO, RECIBIDO) and m not in aprobadas]
+
+    # NUEVO: rama hacia la materia objetivo
+    objetivo = None
+    if p.objetivo is not None:
+        rama_ids = (nx.ancestors(g, p.objetivo) | {p.objetivo}) - {INICIO} - aprobadas
+        rama = [m for m in secuencia if m in rama_ids]   # en el orden de menor riesgo
+        prob_conjunta = math.prod(float(probs[m]) for m in rama) if rama else 1.0
+        objetivo = {
+            "id": int(p.objetivo),
+            "rama": rama,
+            "prob_conjunta": prob_conjunta,
+        }
+
     return {
         "probabilidades": {int(m): float(v) for m, v in probs.items() if m != RECIBIDO},
         "secuencia": secuencia,
         "aprobadas": [int(m) for m in aprobadas],
+        "objetivo": objetivo,
     }
